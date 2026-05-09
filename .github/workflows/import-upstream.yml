@@ -4,14 +4,29 @@ on:
   workflow_dispatch:
     inputs:
       project:
-        description: 'Project to import'
+        description: 'Preset project, or custom'
         required: true
+        default: mamba
         type: choice
         options:
           - mamba
           - deepseek-v3
+          - deepseek-r1
           - flash-attention
           - vllm
+          - custom
+      url:
+        description: 'Required only when project=custom. Example: https://github.com/org/repo.git'
+        required: false
+        type: string
+      family:
+        description: 'Required only when project=custom. Example: moe, dense-transformer, multimodal, inference'
+        required: false
+        type: string
+      name:
+        description: 'Required only when project=custom. Example: deepseek-v4'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -34,7 +49,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y rsync
 
       - name: Import selected upstream
-        run: bash scripts/import_upstream.sh "${{ inputs.project }}"
+        run: |
+          if [[ "${{ inputs.project }}" == "custom" ]]; then
+            bash scripts/import_upstream.sh custom "${{ inputs.url }}" "${{ inputs.family }}" "${{ inputs.name }}"
+          else
+            bash scripts/import_upstream.sh "${{ inputs.project }}"
+          fi
 
       - name: Show import diff summary
         run: git status --short
@@ -45,6 +65,6 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git add vendor manifests docs models scripts .github
+          git add vendor scripts .github README.md LICENSE
           git commit -m "Import upstream architecture: ${{ inputs.project }}"
           git push
