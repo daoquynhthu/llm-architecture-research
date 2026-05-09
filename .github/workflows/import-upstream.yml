@@ -61,6 +61,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: import-upstream-main
+  cancel-in-progress: false
+
 jobs:
   discover:
     if: github.event_name == 'push'
@@ -105,4 +109,14 @@ jobs:
           fi
           git add vendor scripts .github README.md LICENSE
           git commit -m "Import upstream architecture: ${{ inputs.project }}"
-          git push
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main || { git rebase --abort; exit 1; }
+            if git push; then
+              exit 0
+            fi
+            echo "push failed on attempt $attempt; retrying after rebase"
+            sleep 5
+          done
+          echo "push failed after retries" >&2
+          exit 1
