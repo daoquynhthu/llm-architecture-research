@@ -6,14 +6,37 @@ on:
       project:
         description: 'Preset project, or custom'
         required: true
-        default: mamba
+        default: qwen3
         type: choice
         options:
-          - mamba
+          - qwen3
+          - qwen3-coder
+          - qwen3-vl
+          - qwen3-omni
+          - qwen3-tts
           - deepseek-v3
           - deepseek-r1
+          - deepseek-ocr
+          - deepseek-vl2
+          - deepseek-coder-v2
+          - kimi-k2
+          - kimi-k2-5
+          - glm-4-5
+          - glm-v
+          - minicpm
+          - minicpm-o
+          - intern-s1
+          - internlm
+          - hunyuan-turbos
+          - hunyuan-t1
+          - mistral-inference
+          - mamba
+          - rwkv-lm
           - flash-attention
           - vllm
+          - sglang
+          - xformers
+          - megatron-lm
           - custom
       url:
         description: 'Required only when project=custom. Example: https://github.com/org/repo.git'
