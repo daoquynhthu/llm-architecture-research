@@ -1,0 +1,50 @@
+name: import-upstream
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 'Project to import'
+        required: true
+        type: choice
+        options:
+          - mamba
+          - deepseek-v3
+          - flash-attention
+          - vllm
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
+
+      - name: Import selected upstream
+        run: bash scripts/import_upstream.sh "${{ inputs.project }}"
+
+      - name: Show import diff summary
+        run: git status --short
+
+      - name: Commit and push import
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git add vendor manifests docs models scripts .github
+          git commit -m "Import upstream architecture: ${{ inputs.project }}"
+          git push
