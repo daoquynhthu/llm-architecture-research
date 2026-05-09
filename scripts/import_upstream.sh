@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Import selected upstream architecture code into vendor/<family>/<project>/upstream.
-# This script intentionally excludes common weight/checkpoint/data artifacts.
-# It is designed to run inside GitHub Actions or a local clone of this repository.
+# Import upstream architecture/source code into vendor/<family>/<name>/upstream.
+# This script intentionally excludes common model-weight/checkpoint/data artifacts.
+# Usage:
+#   scripts/import_upstream.sh <preset>
+#   scripts/import_upstream.sh custom <git-url> <family> <name>
 
 PROJECT="${1:-}"
 if [[ -z "$PROJECT" ]]; then
-  echo "usage: scripts/import_upstream.sh <mamba|deepseek-v3|flash-attention|vllm>" >&2
+  echo "usage: scripts/import_upstream.sh <mamba|deepseek-v3|deepseek-r1|flash-attention|vllm|custom> [url family name]" >&2
   exit 2
 fi
 
@@ -16,6 +18,7 @@ trap 'rm -rf "$TMP_ROOT"' EXIT
 
 EXCLUDES=(
   "--exclude=.git"
+  "--exclude=.gitmodules"
   "--exclude=*.safetensors"
   "--exclude=*.bin"
   "--exclude=*.pt"
@@ -27,7 +30,9 @@ EXCLUDES=(
   "--exclude=*.npz"
   "--exclude=*.npy"
   "--exclude=checkpoints/"
+  "--exclude=checkpoint*/"
   "--exclude=weights/"
+  "--exclude=model_weights/"
   "--exclude=models--*/"
   "--exclude=.cache/"
   "--exclude=wandb/"
@@ -47,6 +52,11 @@ case "$PROJECT" in
     FAMILY="moe"
     NAME="deepseek-v3"
     ;;
+  deepseek-r1)
+    URL="https://github.com/deepseek-ai/DeepSeek-R1.git"
+    FAMILY="reasoning"
+    NAME="deepseek-r1"
+    ;;
   flash-attention)
     URL="https://github.com/Dao-AILab/flash-attention.git"
     FAMILY="attention-kernels"
@@ -57,11 +67,25 @@ case "$PROJECT" in
     FAMILY="inference"
     NAME="vllm"
     ;;
+  custom)
+    URL="${2:-}"
+    FAMILY="${3:-}"
+    NAME="${4:-}"
+    if [[ -z "$URL" || -z "$FAMILY" || -z "$NAME" ]]; then
+      echo "usage: scripts/import_upstream.sh custom <git-url> <family> <name>" >&2
+      exit 2
+    fi
+    ;;
   *)
     echo "unknown project: $PROJECT" >&2
     exit 2
     ;;
 esac
+
+if [[ ! "$URL" =~ ^https://github.com/[^/]+/[^/]+(\.git)?$ ]]; then
+  echo "only public GitHub HTTPS repository URLs are accepted: $URL" >&2
+  exit 2
+fi
 
 SRC="$TMP_ROOT/$NAME"
 DEST="vendor/$FAMILY/$NAME/upstream"
@@ -91,12 +115,12 @@ cat > "$IMPORT_FILE" <<EOF
 
 ## Exclusion policy
 
-The import script excludes common checkpoint, tensor, dataset, output, and cache artifacts. This repository is intended to archive code and architecture, not model weights or datasets.
+The import script excludes common checkpoint, tensor, dataset, output, and cache artifacts. This repository is intended to archive source code and architecture files, not model weights or datasets.
 
 ## Refresh command
 
 \`\`\`bash
-scripts/import_upstream.sh $PROJECT
+scripts/import_upstream.sh $PROJECT${PROJECT:+}
 \`\`\`
 EOF
 
