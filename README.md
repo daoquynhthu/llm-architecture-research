@@ -1,50 +1,28 @@
 # LLM Architecture Research
 
-A public research repository for collecting, comparing, and re-implementing frontier large-model architectures.
+A public archive for importing and storing open-source large-model architecture code.
 
-This repository is intended to function as an architecture archive rather than a model-weight mirror. It stores:
+This repository is for source code and architecture files only. It is not intended to mirror model weights, datasets, tokenizer artifacts, generated outputs, or cache files.
 
-- architecture notes and comparative analysis;
-- minimal educational implementations;
-- references to upstream repositories and papers;
-- vendor manifests for third-party code imports;
-- compatibility notes about licenses, checkpoints, tokenizer assets, and training recipes.
+## Import workflow
 
-## Repository stance
-
-The main repository is licensed under Apache-2.0. Third-party code, model definitions, configs, tokenizers, and checkpoints remain under their original upstream licenses. Imported code must preserve attribution and license notices.
-
-This distinction is important because many modern model repositories combine permissive source code with separately governed model weights, data terms, or acceptable-use policies.
-
-## Structure
+Use the manual GitHub Action:
 
 ```text
-docs/                         Architecture notes and research memos
-manifests/                    Machine-readable upstream inventory
-vendor/                       Imported or mirrored architecture code, grouped by upstream
-models/                       Minimal local implementations and experiments
-templates/                    Review and import templates
-scripts/                      Sync/check utilities
+Actions -> import-upstream -> Run workflow -> choose project
 ```
 
-## Initial architecture targets
+Supported import targets:
 
-The first archive targets are grouped by architectural family:
+```text
+mamba
+deepseek-v3
+flash-attention
+vllm
+```
 
-1. Dense decoder-only Transformers: GPT-style, LLaMA-style, Qwen-style, Mistral-style.
-2. Mixture-of-Experts Transformers: Mixtral-style, DeepSeek-style, Switch/GShard lineage.
-3. Attention variants: MQA, GQA, sliding-window attention, latent attention, MLA-like decompositions.
-4. State-space and hybrid models: Mamba-like selective SSM, RWKV-like recurrent hybrids, Jamba-like hybrids.
-5. Long-context systems: RoPE scaling, ALiBi-like schemes, YaRN/NTK-aware scaling, recurrent memory, retrieval-augmented context.
-6. Inference-oriented architecture: KV-cache design, paged attention, speculative decoding, quantization-aware blocks.
+The workflow runs `scripts/import_upstream.sh`, which clones the selected upstream repository, copies its source tree into `vendor/<family>/<project>/upstream`, excludes common weight/data artifacts, writes `IMPORT.md`, and commits the result back to this repository.
 
-## Import rule
+## License boundary
 
-Do not paste third-party source code into this repository unless one of the following is true:
-
-- the upstream license permits redistribution;
-- the original license file is preserved under the imported subtree;
-- the import is a clean-room minimal reimplementation;
-- the import is only a submodule/link/reference rather than copied source.
-
-For each architecture import, add one entry to `manifests/frontier-architectures.yaml` and one model card under `vendor/<family>/<project>/README.md`.
+The repository-level license is Apache-2.0. Third-party code imported under `vendor/` remains governed by its upstream license. Each imported subtree must retain its original license files and import record.
