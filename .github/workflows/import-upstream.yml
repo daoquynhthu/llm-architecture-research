@@ -1,6 +1,13 @@
 name: import-upstream
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/import-upstream.yml'
+      - 'scripts/import_upstream.sh'
+      - 'README.md'
   workflow_dispatch:
     inputs:
       project:
@@ -55,7 +62,15 @@ permissions:
   contents: write
 
 jobs:
+  discover:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Register workflow
+        run: echo "import-upstream workflow is registered. Use workflow_dispatch to import upstream repositories."
+
   import:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
